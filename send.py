@@ -17,7 +17,7 @@ themes = [
 theme = random.choice(themes)
 
 prompt = (
-    f"Напиши утреннее мотивационное сообщение на русском, 4–6 предложений (60–90 слов), "
+    f"Напиши утреннее мотивационное сообщение на русском, 2–3 предложения (30–45 слов), "
     f"на тему: {theme}. "
     "Тон тёплый и бодрящий, без клише и пафоса, без эмодзи и хэштегов. "
     "Заверши лёгким призывом к действию на сегодня."
@@ -27,7 +27,7 @@ text = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[{"role": "user", "content": prompt}],
     temperature=0.95,
-    max_tokens=400,
+    max_tokens=200,
 ).choices[0].message.content.strip()
 
 r = requests.post(
