@@ -1,6 +1,68 @@
-import os, random, requests
+import os, json, random, datetime, urllib.request, urllib.error
+import requests
 from openai import OpenAI
 
+# --- antidup via GitHub issue marker ---
+MSK = datetime.timezone(datetime.timedelta(hours=3))
+today = datetime.datetime.now(MSK).strftime("%Y-%m-%d")
+MARKER_TITLE = f"sent:{today}"
+MARKER_LABEL = "sent-marker"
+
+gh_token = os.environ.get("GITHUB_TOKEN")
+repo = os.environ.get("GITHUB_REPOSITORY")
+
+
+def gh(method, path, data=None):
+    req = urllib.request.Request(
+        f"https://api.github.com{path}",
+        method=method,
+        headers={
+            "Authorization": f"Bearer {gh_token}",
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "morning-motivation-bot",
+        },
+        data=json.dumps(data).encode() if data is not None else None,
+    )
+    try:
+        with urllib.request.urlopen(req) as r:
+            body = r.read()
+            return json.loads(body) if body else {}
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return None
+        raise
+
+
+def already_sent_today():
+    if not (gh_token and repo):
+        return False
+    issues = gh(
+        "GET",
+        f"/repos/{repo}/issues?state=all&labels={MARKER_LABEL}&per_page=100",
+    ) or []
+    return any(i.get("title") == MARKER_TITLE for i in issues)
+
+
+def mark_sent_today():
+    if not (gh_token and repo):
+        return
+    try:
+        gh("POST", f"/repos/{repo}/labels",
+           {"name": MARKER_LABEL, "color": "ededed"})
+    except Exception:
+        pass
+    issue = gh("POST", f"/repos/{repo}/issues",
+               {"title": MARKER_TITLE, "labels": [MARKER_LABEL]})
+    if issue and "number" in issue:
+        gh("PATCH", f"/repos/{repo}/issues/{issue['number']}",
+           {"state": "closed"})
+
+
+if already_sent_today():
+    print(f"Already sent today ({today}), exit.")
+    raise SystemExit(0)
+
+# --- generate motivation ---
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 themes = [
@@ -37,4 +99,5 @@ r = requests.post(
 )
 
 r.raise_for_status()
+mark_sent_today()
 print("Sent:", text)
