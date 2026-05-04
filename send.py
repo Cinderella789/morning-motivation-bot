@@ -1,4 +1,4 @@
-import os, json, random, datetime, urllib.request, urllib.error
+import os, json, random, datetime, urllib.request, urllib.error, html
 import requests
 from openai import OpenAI
 
@@ -92,12 +92,25 @@ text = client.chat.completions.create(
     max_tokens=200,
 ).choices[0].message.content.strip()
 
+safe_text = html.escape(text)
+
+formatted_text = (
+    "<b>Доброе утро</b>\n\n"
+    f"{safe_text}\n\n"
+    "<i>Пусть день сложится в твою пользу.</i>"
+)
+
 r = requests.post(
     f"https://api.telegram.org/bot{os.environ['TELEGRAM_BOT_TOKEN']}/sendMessage",
-    json={"chat_id": os.environ["TELEGRAM_CHAT_ID"], "text": text},
+    json={
+        "chat_id": os.environ["TELEGRAM_CHAT_ID"],
+        "text": formatted_text,
+        "parse_mode": "HTML",
+    },
     timeout=15,
 )
 
 r.raise_for_status()
 mark_sent_today()
 print("Sent:", text)
+
