@@ -31,9 +31,10 @@ text = client.chat.completions.create(
 ).choices[0].message.content.strip()
 
 r = requests.post(
-    f"https://api.telegram.org/bot{os.environ['TG_TOKEN']}/sendMessage",
-    json={"chat_id": os.environ["TG_CHAT_ID"], "text": text},
+    f"https://api.telegram.org/bot{os.environ['TELEGRAM_BOT_TOKEN']}/sendMessage",
+    json={"chat_id": os.environ["TELEGRAM_CHAT_ID"], "text": text},
     timeout=15,
 )
+
 r.raise_for_status()
 print("Sent:", text)
