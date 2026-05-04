@@ -1,4 +1,5 @@
 name: Daily Motivation
+
 on:
   schedule:
     # каждые 15 минут с 05:00 до 05:59 UTC (08:00–08:59 МСК)
@@ -12,14 +13,19 @@ concurrency:
 jobs:
   send:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
       - run: pip install -r requirements.txt
+
       - run: python send.py
         env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
