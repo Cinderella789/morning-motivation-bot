@@ -99,8 +99,7 @@ safe_text = html.escape(text)
 
 formatted_text = (
     "<b>Доброе утро</b>\n\n"
-    f"{safe_text}\n\n"
-    "<b>Пусть день сложится в твою пользу.</b>"
+    f"{safe_text}"
 )
 
 r = requests.post(
