@@ -2,8 +2,9 @@ name: Daily Motivation
 
 on:
   schedule:
-    - cron: '7 5 * * *'    # 08:07 MSK — основной запуск
-    - cron: '17 5 * * *'   # 08:17 MSK — резерв на случай, если первый скипнулся
+    - cron: '7 5 * * *'    # 08:07 MSK основной
+    - cron: '17 5 * * *'   # 08:17 MSK резерв
+    - cron: '37 5 * * *'   # 08:37 MSK ещё один резерв
   workflow_dispatch:
 
 concurrency:
@@ -36,9 +37,4 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
 
 
-          - name: Commit last_sent flag
-        run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add last_sent.txt
-          git diff --cached --quiet || (git commit -m "update last_sent" && git push)
+          
