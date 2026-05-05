@@ -6,6 +6,8 @@ on:
     - cron: '17 5 * * *'   # 08:17 MSK резерв
     - cron: '37 5 * * *'   # 08:37 MSK ещё один резерв
   workflow_dispatch:
+  repository_dispatch:
+    types: [morning]
 
 concurrency:
   group: daily-motivation
@@ -13,7 +15,6 @@ concurrency:
 
 permissions:
   contents: read
-  contents: write
   issues: write
 
 jobs:
