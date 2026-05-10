@@ -1,10 +1,10 @@
 name: Daily Motivation
 
 on:
-  schedule:
-    - cron: '7 5 * * *'    # 08:07 MSK основной
-    - cron: '17 5 * * *'   # 08:17 MSK резерв
-    - cron: '37 5 * * *'   # 08:37 MSK ещё один резерв
+  # Cron-планировщик переехал на личный сервер (10.05.2026):
+  # GitHub Actions пропускал запуски и задерживал их на 4-5 часов.
+  # Скрипт крутится из ~/morning-motivation/run.sh на cinderella@91.228.152.239
+  # по системному cron в 05:00 UTC = 08:00 MSK.
   workflow_dispatch:
   repository_dispatch:
     types: [morning]
@@ -36,6 +36,3 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-
-
-          

@@ -1,0 +1,4 @@
+.last-sent-date.txt
+.env
+logs/
+.venv/

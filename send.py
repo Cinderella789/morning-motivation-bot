@@ -1,68 +1,18 @@
-import os, json, random, datetime, urllib.request, urllib.error, html
+import os, json, random, datetime, html
+from pathlib import Path
 import requests
 from openai import OpenAI
 
-# --- antidup via GitHub issue marker ---
+# --- защёлка от случайных дублей ---
 MSK = datetime.timezone(datetime.timedelta(hours=3))
 today = datetime.datetime.now(MSK).strftime("%Y-%m-%d")
-MARKER_TITLE = f"sent:{today}"
-MARKER_LABEL = "sent-marker"
+LOCK = Path(__file__).parent / ".last-sent-date.txt"
 
-gh_token = os.environ.get("GITHUB_TOKEN")
-repo = os.environ.get("GITHUB_REPOSITORY")
-
-
-def gh(method, path, data=None):
-    req = urllib.request.Request(
-        f"https://api.github.com{path}",
-        method=method,
-        headers={
-            "Authorization": f"Bearer {gh_token}",
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "morning-motivation-bot",
-        },
-        data=json.dumps(data).encode() if data is not None else None,
-    )
-    try:
-        with urllib.request.urlopen(req) as r:
-            body = r.read()
-            return json.loads(body) if body else {}
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            return None
-        raise
-
-
-def already_sent_today():
-    if not (gh_token and repo):
-        return False
-    issues = gh(
-        "GET",
-        f"/repos/{repo}/issues?state=all&labels={MARKER_LABEL}&per_page=100",
-    ) or []
-    return any(i.get("title") == MARKER_TITLE for i in issues)
-
-
-def mark_sent_today():
-    if not (gh_token and repo):
-        return
-    try:
-        gh("POST", f"/repos/{repo}/labels",
-           {"name": MARKER_LABEL, "color": "ededed"})
-    except Exception:
-        pass
-    issue = gh("POST", f"/repos/{repo}/issues",
-               {"title": MARKER_TITLE, "labels": [MARKER_LABEL]})
-    if issue and "number" in issue:
-        gh("PATCH", f"/repos/{repo}/issues/{issue['number']}",
-           {"state": "closed"})
-
-
-if already_sent_today():
+if LOCK.exists() and LOCK.read_text(encoding="utf-8").strip() == today and "--force" not in os.sys.argv:
     print(f"Already sent today ({today}), exit.")
     raise SystemExit(0)
 
-# --- generate motivation ---
+# --- генерация ---
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 themes = [
@@ -75,7 +25,6 @@ themes = [
     "про творчество и любопытство",
     "в духе стоиков (Марк Аврелий, Сенека), но простыми словами",
 ]
-
 theme = random.choice(themes)
 
 prompt = (
@@ -96,11 +45,7 @@ text = client.chat.completions.create(
 ).choices[0].message.content.strip()
 
 safe_text = html.escape(text)
-
-formatted_text = (
-    "<b>Доброе утро</b>\n\n"
-    f"{safe_text}"
-)
+formatted_text = f"<b>Доброе утро</b>\n\n{safe_text}"
 
 r = requests.post(
     f"https://api.telegram.org/bot{os.environ['TELEGRAM_BOT_TOKEN']}/sendMessage",
@@ -111,8 +56,7 @@ r = requests.post(
     },
     timeout=15,
 )
-
 r.raise_for_status()
-mark_sent_today()
-print("Sent:", text)
 
+LOCK.write_text(today, encoding="utf-8")
+print("Sent:", text)
